@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 
 
 class Tipo(models.IntegerChoices):
@@ -64,6 +64,28 @@ class Movimentacao(models.Model):
     data = models.DateField(
         verbose_name="Data da movimentação"
     )
+
+    def save(self, *args, **kwargs):
+        if not self.liquidada:
+            try:
+
+                with transaction.atomic():
+                    self.conta.liquidar_movimentacao(
+                        self.tipo, self.valor
+                    )
+                    self.conta.save()
+
+                    self.liquidada = True
+
+                    super(Movimentacao, self).save(*args, **kwargs)
+
+            except Exception:
+                raise Exception(
+                    "Ocorreu um erro. Por favor, tente novamente mais tarde"
+                )
+
+        super(Movimentacao, self).save(*args, **kwargs)
+
 
     class Meta:
         db_table = "movimentacao"

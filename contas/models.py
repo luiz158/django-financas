@@ -1,5 +1,7 @@
 from django.db import models
 
+from movimentacoes.models import Tipo as TipoMovimentacao
+
 
 class Tipo(models.IntegerChoices):
     SALARIO = 1, "Conta salário"
@@ -25,6 +27,12 @@ class Conta(models.Model):
         decimal_places=2,
         default=0.0,
     )
+
+    def liquidar_movimentacao(self, tipo_movimentacao, valor):
+        if tipo_movimentacao == TipoMovimentacao.RECEITA:
+            self.saldo += valor
+        elif tipo_movimentacao == TipoMovimentacao.DESPESA:
+            self.saldo -= valor
 
     class Meta:
         db_table = "conta"
